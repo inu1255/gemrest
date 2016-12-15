@@ -8,4 +8,5 @@ type database struct {
 type config struct {
 	Database database
 	Dev      bool
+	DocBind  string // doc api url
 }
