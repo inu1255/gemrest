@@ -37,11 +37,13 @@ func init() {
 		}
 	}
 	var err error
-	Db, _ = xorm.NewEngine(conf.Database.Driver, conf.Database.DataSource)
+	Db, err = xorm.NewEngine(conf.Database.Driver, conf.Database.DataSource)
 	if err != nil {
 		log.Fatalln("open database false", err)
 	}
 	if conf.Dev {
+		cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
+		Db.SetDefaultCacher(cacher)
 		Db.ShowSQL(true)
 	}
 

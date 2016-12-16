@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -56,13 +57,23 @@ func newJsonCall(t reflect.Type) convertFunc {
 	}
 }
 
+var (
+	name2route = regexp.MustCompile(`([a-z]|^)[A-Z]`)
+)
+
+func nameToRoute(from string) string {
+	if len(from) == 2 {
+		return from[:1] + "-" + strings.ToLower(from[1:])
+	}
+	return strings.ToLower(from)
+}
 func convertMethodParams(prefix string, m reflect.Method) (int, string, []convertFunc) {
 	numOut := m.Type.NumOut()
 	if numOut != 2 || m.Type.Out(1).Kind() != reflect.String {
 		return -1, "", nil
 	}
 	numIn := m.Type.NumIn()
-	path := prefix + "/" + strings.ToLower(m.Name)
+	path := prefix + "/" + name2route.ReplaceAllStringFunc(m.Name, nameToRoute)
 	call := make([]convertFunc, numIn)
 	flag := 0 // -1:"ignore current" 0:"GET" 1:"POST"
 	for i := 1; i < numIn; i++ {

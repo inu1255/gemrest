@@ -14,11 +14,12 @@ var (
 
 type ApiService interface {
 	Before(ctx *gem.Context) bool
-	Finish(ctx *gem.Context, err interface{})
-	After(ctx *gem.Context, data interface{}, msg string)
+	Finish(err interface{})
+	After(data interface{}, msg string)
 }
 
-func makeHandlerFunc(apply reflect.Value, call []convertFunc) gem.HandlerFunc {
+// call the api
+func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 	return func(ctx *gem.Context) {
 		n := len(call)
 		params := make([]reflect.Value, n)
@@ -26,22 +27,27 @@ func makeHandlerFunc(apply reflect.Value, call []convertFunc) gem.HandlerFunc {
 		service := params[0].Interface().(ApiService)
 		defer func() {
 			err := recover()
-			log.Println("recover", err)
-			service.Finish(ctx, err)
+			if err != nil {
+				log.Println("recover", err)
+			}
+			service.Finish(err)
 		}()
 		for i := 1; i < n; i++ {
 			params[i] = call[i](ctx, strconv.Itoa(i))
 		}
 		if service.Before(ctx) {
-			log.Println(params)
-			out := apply.Call(params)
+			log.Println(params[0].Type(), m.Name, params[1:])
+			out := m.Func.Call(params)
 			data := out[0].Interface()
 			msg := out[1].String()
-			service.After(ctx, data, msg)
+			service.After(data, msg)
 		}
 	}
 }
 
+// bind a router for service's method
+// method satisfy func(in ...interface{}) (interface{},string) will be export
+// if there is slice/struct/ptr in "params in" ,export a POST router
 func Bind(prefix string, service ApiService) {
 	t := reflect.TypeOf(service)
 	numMethod := t.NumMethod()
@@ -55,10 +61,10 @@ func Bind(prefix string, service ApiService) {
 		call[0] = instCall
 		if flag == 1 {
 			log.Println("post", path)
-			Router.POST(path, makeHandlerFunc(m.Func, call))
+			Router.POST(path, makeHandlerFunc(m, call))
 		} else {
 			log.Println("get", path)
-			Router.GET(path, makeHandlerFunc(m.Func, call))
+			Router.GET(path, makeHandlerFunc(m, call))
 		}
 	}
 }
