@@ -14,11 +14,43 @@ import (
 
 type convertFunc func(*gem.Context, string) reflect.Value
 
+// only new
 func newInstCall(t reflect.Type) convertFunc {
 	return func(*gem.Context, string) reflect.Value {
 		return reflect.New(t)
 	}
 }
+
+// new and copy
+func copyInstCall(src ApiService) convertFunc {
+	return func(*gem.Context, string) reflect.Value {
+		return CloneValue(reflect.ValueOf(src))
+	}
+}
+func CloneValue(src reflect.Value) reflect.Value {
+	var dst reflect.Value
+	if src.Kind() == reflect.Ptr || src.Kind() == reflect.Interface {
+		src = src.Elem()
+	}
+	dst = reflect.New(src.Type())
+	cloneValue(src, dst.Elem())
+	return dst
+}
+func cloneValue(src, dst reflect.Value) {
+	switch src.Kind() {
+	case reflect.Struct:
+		n := src.NumField()
+		for i := 0; i < n; i++ {
+			f := src.Field(i)
+			cloneValue(f, dst.Field(i))
+		}
+	default:
+		if dst.CanSet() {
+			dst.Set(src)
+		}
+	}
+}
+
 func newString(ctx *gem.Context, index string) reflect.Value {
 	return reflect.ValueOf(ctx.Param(index))
 }

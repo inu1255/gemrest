@@ -44,6 +44,10 @@ func (d *DefaultService) Finish(err interface{}) {
 func stack() []byte {
 	buf := make([]byte, 10240)
 	n := runtime.Stack(buf, false)
+	if n > 738 {
+		copy(buf[23:], buf[738:n])
+		return buf[:n-715]
+	}
 	return buf[:n]
 }
 func printStack() {

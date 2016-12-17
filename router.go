@@ -51,7 +51,8 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 func Bind(prefix string, service ApiService) {
 	t := reflect.TypeOf(service)
 	numMethod := t.NumMethod()
-	instCall := newInstCall(t.Elem())
+	// instCall := newInstCall(t.Elem())
+	instCall := copyInstCall(service)
 	for i := 0; i < numMethod; i++ {
 		m := t.Method(i)
 		flag, path, call := convertMethodParams(prefix, m)

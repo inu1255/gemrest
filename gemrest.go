@@ -41,9 +41,9 @@ func init() {
 	if err != nil {
 		log.Fatalln("open database false", err)
 	}
+	cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
+	Db.SetDefaultCacher(cacher)
 	if conf.Dev {
-		cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
-		Db.SetDefaultCacher(cacher)
 		Db.ShowSQL(true)
 	}
 
