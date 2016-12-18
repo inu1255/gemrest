@@ -6,6 +6,7 @@ import (
 	"log"
 	"runtime"
 
+	"reflect"
 	"github.com/go-gem/gem"
 	"github.com/go-xorm/xorm"
 )
@@ -101,16 +102,35 @@ type ModelService struct {
 func defaultWFunc(ctx *Context) string {
 	return string(ctx.QueryArgs().Peek("where"))
 }
-func (m *ModelService) Find(wFunc func(*Context) string) ([]interface{}, string) {
+func defaultOFunc(ctx *Context) string {
+	return string(ctx.QueryArgs().Peek("order"))
+}
+func (m *ModelService) Get(wFunc func(*Context) string) (interface{}, string){
 	if m.Table == nil {
 		return make([]interface{}, 0), "need Table"
 	}
 	if wFunc == nil {
 		wFunc = defaultWFunc
 	}
+	one := reflect.New(reflect.TypeOf(m.Table).Elem()).Interface()
+	m.Db.Where(wFunc(m.Ctx))
+	m.Db.Get(one)
+	return one,""
+}
+func (m *ModelService) Find(wFunc,oFunc func(*Context) string) ([]interface{}, string) {
+	if m.Table == nil {
+		return make([]interface{}, 0), "need Table"
+	}
+	if wFunc == nil {
+		wFunc = defaultWFunc
+	}
+	if oFunc==nil {
+		oFunc = defaultOFunc
+	}
 	size := 10
 	data := make([]interface{}, size)
 	m.Db.Where(wFunc(m.Ctx))
+	m.Db.OrderBy(oFunc(m.Ctx))
 	m.Db.Limit(size)
 	n := 0
 	m.Db.Iterate(m.Table, func(i int, item interface{}) error {
