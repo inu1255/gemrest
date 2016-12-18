@@ -8,22 +8,20 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/go-gem/gem"
 )
 
-type convertFunc func(*gem.Context, string) reflect.Value
+type convertFunc func(*Context, string) reflect.Value
 
 // only new
 func newInstCall(t reflect.Type) convertFunc {
-	return func(*gem.Context, string) reflect.Value {
+	return func(*Context, string) reflect.Value {
 		return reflect.New(t)
 	}
 }
 
 // new and copy
 func copyInstCall(src ApiService) convertFunc {
-	return func(*gem.Context, string) reflect.Value {
+	return func(*Context, string) reflect.Value {
 		return CloneValue(reflect.ValueOf(src))
 	}
 }
@@ -51,41 +49,46 @@ func cloneValue(src, dst reflect.Value) {
 	}
 }
 
-func newString(ctx *gem.Context, index string) reflect.Value {
+func newString(ctx *Context, index string) reflect.Value {
 	return reflect.ValueOf(ctx.Param(index))
 }
-func newInt(ctx *gem.Context, index string) reflect.Value {
+func newInt(ctx *Context, index string) reflect.Value {
 	if r, e := strconv.Atoi(ctx.Param(index)); e == nil {
 		return reflect.ValueOf(r)
 	}
 	return reflect.ValueOf(0)
 }
-func newInt64(ctx *gem.Context, index string) reflect.Value {
+func newInt64(ctx *Context, index string) reflect.Value {
 	if r, e := strconv.ParseInt(ctx.Param(index), 10, 64); e == nil {
 		return reflect.ValueOf(r)
 	}
 	return reflect.ValueOf(0)
 }
-func newFloat32(ctx *gem.Context, index string) reflect.Value {
+func newFloat32(ctx *Context, index string) reflect.Value {
 	if r, e := strconv.ParseFloat(ctx.Param(index), 32); e == nil {
 		return reflect.ValueOf(float32(r))
 	}
 	return reflect.ValueOf(float32(0))
 }
-func newFloat64(ctx *gem.Context, index string) reflect.Value {
+func newFloat64(ctx *Context, index string) reflect.Value {
 	if r, e := strconv.ParseFloat(ctx.Param(index), 64); e == nil {
 		return reflect.ValueOf(r)
 	}
 	return reflect.ValueOf(0.0)
 }
 func newJsonCall(t reflect.Type) convertFunc {
-	return func(ctx *gem.Context, index string) reflect.Value {
+	return func(ctx *Context, index string) reflect.Value {
 		v := reflect.New(t)
 		if err := json.Unmarshal(ctx.Request.Body(), v.Interface()); err == nil {
 			return v.Elem()
 		} else {
 			panic(err)
 		}
+	}
+}
+func newNilCall(t reflect.Type) convertFunc {
+	return func(ctx *Context, index string) reflect.Value {
+		return reflect.Zero(t)
 	}
 }
 
@@ -133,6 +136,8 @@ func convertMethodParams(prefix string, m reflect.Method) (int, string, []conver
 				call[i] = newJsonCall(m.Type.In(i))
 				flag = 1
 			}
+		case reflect.Func:
+			call[i] = newNilCall(m.Type.In(i))
 		default:
 			log.Println("default", i, m.Type.In(i).Kind())
 			flag = -1

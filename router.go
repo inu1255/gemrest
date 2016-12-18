@@ -12,15 +12,20 @@ var (
 	Router = gem.NewRouter()
 )
 
+type Context struct {
+	*gem.Context
+}
+
 type ApiService interface {
-	Before(ctx *gem.Context) bool
+	Before(ctx *Context) bool
 	Finish(err interface{})
 	After(data interface{}, msg string)
 }
 
 // call the api
 func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
-	return func(ctx *gem.Context) {
+	return func(gctx *gem.Context) {
+		ctx := &Context{Context: gctx}
 		n := len(call)
 		params := make([]reflect.Value, n)
 		params[0] = call[0](ctx, "")
