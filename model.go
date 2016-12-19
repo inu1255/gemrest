@@ -10,6 +10,8 @@ import (
 
 type TableInterface interface {
 	TableName() string
+	GetDetail() interface{}
+	GetSearch() interface{}
 }
 
 type ModelService struct {
@@ -32,6 +34,10 @@ func NewModelService(t TableInterface) *ModelService {
 	return &ModelService{Table: t}
 }
 
+func (m *ModelService) SetTable(t TableInterface) {
+	m.Table = t
+}
+
 func (m *ModelService) Get(wFunc func(*Context) string) (interface{}, string) {
 	if m.Table == nil {
 		return make([]interface{}, 0), "need Table"
@@ -50,7 +56,7 @@ func (m *ModelService) GetById(id int) (interface{}, string) {
 	}
 	one := reflect.New(reflect.TypeOf(m.Table).Elem()).Interface()
 	m.Db.Id(id).Get(one)
-	return one, ""
+	return one.(TableInterface).GetDetail(), ""
 }
 func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, string) {
 	if m.Table == nil {
@@ -75,7 +81,7 @@ func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, 
 	n := 0
 	log.Println(size)
 	m.Db.Iterate(m.Table, func(i int, item interface{}) error {
-		data[i] = item
+		data[i] = item.(TableInterface).GetSearch()
 		n++
 		return nil
 	})
