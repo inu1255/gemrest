@@ -24,12 +24,12 @@ func (this *{{Mapper .Name}})GetSearch()interface{}{
 	return this
 }
 
-type {{Mapper .Name}}Service struct {
+type {{.Name}}Service struct {
 	gemrest.ModelService
 }
 
-func New{{Mapper .Name}}Service() *{{Mapper .Name}}Service {
-	inst:= &{{Mapper .Name}}Service{}
+func New{{Mapper .Name}}Service() *{{.Name}}Service {
+	inst:= &{{.Name}}Service{}
 	inst.SetTable(&{{Mapper .Name}}{})
 	return inst
 }
