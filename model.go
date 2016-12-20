@@ -1,7 +1,6 @@
 package gemrest
 
 import (
-	"log"
 	"strconv"
 
 	"reflect"
@@ -79,7 +78,6 @@ func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, 
 	m.Db.OrderBy(oFunc(m.Ctx))
 	m.Db.Limit(size, size*page)
 	n := 0
-	log.Println(size)
 	m.Db.Iterate(m.Table, func(i int, item interface{}) error {
 		data[i] = item.(TableInterface).GetSearch()
 		n++
