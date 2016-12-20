@@ -8,7 +8,6 @@ import (
 )
 
 type TableInterface interface {
-	TableName() string
 	GetDetail() interface{}
 	GetSearch() interface{}
 }
@@ -49,7 +48,7 @@ func (m *ModelService) Get(wFunc func(*Context) string) (interface{}, string) {
 	m.Db.Get(one)
 	return one, ""
 }
-func (m *ModelService) GetById(id int) (interface{}, string) {
+func (m *ModelService) GetById(id string) (interface{}, string) {
 	if m.Table == nil {
 		return make([]interface{}, 0), "need Table"
 	}
@@ -57,6 +56,21 @@ func (m *ModelService) GetById(id int) (interface{}, string) {
 	m.Db.Id(id).Get(one)
 	return one.(TableInterface).GetDetail(), ""
 }
+
+func (this *ModelService) Del(id string) (interface{}, string) {
+	if this.Table == nil {
+		return make([]interface{}, 0), "need Table"
+	}
+	if IsZero(id) {
+		return nil, "id错误"
+	}
+	_, err := this.Db.Id(id).Delete(this.Table)
+	if err != nil {
+		return nil, err.Error()
+	}
+	return nil, ""
+}
+
 func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, string) {
 	if m.Table == nil {
 		return make([]interface{}, 0), "need Table"

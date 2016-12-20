@@ -18,10 +18,6 @@ type {{Mapper .Name}}Detail struct{
     {{Mapper .Name}}
 }
 
-func (this *{{Mapper .Name}})TableName()string{
-	return "{{.Name}}"
-}
-
 func (this *{{Mapper .Name}})GetDetail()interface{}{
 	return {{Mapper .Name}}Detail{ {{Mapper .Name}}:*this}
 }
@@ -32,6 +28,25 @@ func (this *{{Mapper .Name}})GetSearch()interface{}{
 
 type {{Mapper .Name}}Service struct {
 	gemrest.ModelService
+}
+
+func (this *{{Mapper .Name}}Service) Insert(src *{{Mapper .Name}}) (*{{Mapper .Name}}, string) {
+	_, err := this.Db.Insert(src)
+	if err != nil {
+		return nil, err.Error()
+	}
+	return src, ""
+}
+
+func (this *{{Mapper .Name}}Service) Update(id string,src *{{Mapper .Name}}) (*{{Mapper .Name}}, string) {
+	n, err := this.Db.Id(id).Update(src)	
+	if err != nil {
+		return nil, err.Error()
+	}
+	if n <1 {
+		return nil,"没有变化"
+	}
+	return src, ""
 }
 
 func New{{Mapper .Name}}Service() *{{Mapper .Name}}Service {
