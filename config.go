@@ -3,7 +3,6 @@ package gemrest
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -44,7 +43,7 @@ func init() {
 		body, err := json.MarshalIndent(conf, "", "    ")
 		if err == nil {
 			log.Println("no configuration,writing")
-			ioutil.WriteFile(*configFile, body, 0644)
+			// ioutil.WriteFile(*configFile, body, 0644)
 		}
 	}
 	var err error
