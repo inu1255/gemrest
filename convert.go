@@ -145,8 +145,5 @@ func convertMethodParams(prefix string, m reflect.Method) (int, string, []conver
 			break
 		}
 	}
-	if conf.DocBind != "" {
-
-	}
 	return flag, path, call
 }

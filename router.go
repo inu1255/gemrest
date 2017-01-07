@@ -68,7 +68,7 @@ func Bind(prefix string, service ApiService) {
 			logger.Println("post", path)
 			Router.POST(path, makeHandlerFunc(m, call))
 		} else {
-			logger.Println("get", path)
+			logger.Println("get ", path)
 			Router.GET(path, makeHandlerFunc(m, call))
 		}
 	}
