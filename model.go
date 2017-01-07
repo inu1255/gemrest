@@ -3,6 +3,8 @@ package gemrest
 import (
 	"strconv"
 
+	"github.com/inu1255/gohelper"
+
 	"reflect"
 	"regexp"
 )
@@ -61,7 +63,7 @@ func (this *ModelService) Del(id string) (interface{}, string) {
 	if this.Table == nil {
 		return make([]interface{}, 0), "need Table"
 	}
-	if IsZero(id) {
+	if gohelper.IsZero(id) {
 		return nil, "id错误"
 	}
 	_, err := this.Db.Id(id).Delete(this.Table)

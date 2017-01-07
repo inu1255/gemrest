@@ -3,7 +3,6 @@ package gemrest
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"runtime"
 
 	"github.com/go-gem/gem"
@@ -20,8 +19,8 @@ func stack() []byte {
 	return buf[:n]
 }
 func printStack() {
-	log.Println(string(stack()))
-	log.Println("end here.")
+	logger.Println(string(stack()))
+	logger.Println("end here.")
 }
 
 // ApiMsg ...

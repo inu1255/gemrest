@@ -1,7 +1,6 @@
 package gemrest
 
 import (
-	"log"
 	"reflect"
 	"strconv"
 
@@ -33,7 +32,7 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 		defer func() {
 			err := recover()
 			if err != nil {
-				log.Println("recover", err)
+				logger.Println("recover", err)
 			}
 			service.Finish(err)
 		}()
@@ -41,7 +40,7 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 			params[i] = call[i](ctx, strconv.Itoa(i))
 		}
 		if service.Before(ctx) {
-			log.Println(params[0].Type(), m.Name, params[1:])
+			logger.Println(params[0].Type(), m.Name, params[1:])
 			out := m.Func.Call(params)
 			data := out[0].Interface()
 			msg := out[1].String()
@@ -66,10 +65,10 @@ func Bind(prefix string, service ApiService) {
 		}
 		call[0] = instCall
 		if flag == 1 {
-			log.Println("post", path)
+			logger.Println("post", path)
 			Router.POST(path, makeHandlerFunc(m, call))
 		} else {
-			log.Println("get", path)
+			logger.Println("get", path)
 			Router.GET(path, makeHandlerFunc(m, call))
 		}
 	}
@@ -77,5 +76,5 @@ func Bind(prefix string, service ApiService) {
 
 func Start(host string) {
 	srv := gem.New(host, Router.Handler())
-	log.Fatal(srv.ListenAndServe())
+	logger.Fatal(srv.ListenAndServe())
 }

@@ -3,7 +3,6 @@ package gemrest
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -139,7 +138,7 @@ func convertMethodParams(prefix string, m reflect.Method) (int, string, []conver
 		case reflect.Func:
 			call[i] = newNilCall(m.Type.In(i))
 		default:
-			log.Println("default", i, m.Type.In(i).Kind())
+			logger.Println("default", i, m.Type.In(i).Kind())
 			flag = -1
 		}
 		if flag == -1 {
