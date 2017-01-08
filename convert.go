@@ -2,6 +2,7 @@ package gemrest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -93,6 +94,8 @@ func newNilCall(t reflect.Type) convertFunc {
 
 var (
 	name2route = regexp.MustCompile(`([a-z]|^)[A-Z]`)
+	_e         = errors.New("")
+	errorType  = reflect.TypeOf(_e).Elem()
 )
 
 func nameToRoute(from string) string {
@@ -103,7 +106,7 @@ func nameToRoute(from string) string {
 }
 func convertMethodParams(prefix string, m reflect.Method) (int, string, []convertFunc) {
 	numOut := m.Type.NumOut()
-	if numOut != 2 || m.Type.Out(1).Kind() != reflect.String {
+	if numOut != 2 || m.Type.Out(1).Kind() != reflect.Interface || errorType.Implements(m.Type.Out(1)) {
 		return -1, "", nil
 	}
 	numIn := m.Type.NumIn()

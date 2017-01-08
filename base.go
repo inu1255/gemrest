@@ -3,6 +3,7 @@ package gemrest
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"runtime"
 
 	"github.com/go-gem/gem"
@@ -63,15 +64,20 @@ type CrosService struct {
 	DefaultService
 }
 
+var re_origin = regexp.MustCompile(`https?://`)
+
 func (m *CrosService) Before(ctx *Context) bool {
-	ctx.Response.Header.Add("Access-Control-Allow-Origin", string(ctx.Request.Host()))
-	ctx.Response.Header.Add("Access-Control-Allow-Credentials", "true")
-	ctx.Response.Header.Add("Access-Control-Allow-Headers", "x-auth-token,content-type")
+	origin := string(ctx.Request.Header.Peek("Origin"))
+	if origin != "" {
+		ctx.Response.Header.Add("Access-Control-Allow-Origin", re_origin.ReplaceAllString(origin, ""))
+		ctx.Response.Header.Add("Access-Control-Allow-Credentials", "true")
+		ctx.Response.Header.Add("Access-Control-Allow-Headers", "x-auth-token,content-type")
+	}
 	return m.DefaultService.Before(ctx)
 }
 
 type DatabaseService struct {
-	DefaultService
+	CrosService
 	Db *xorm.Session
 }
 
@@ -79,7 +85,7 @@ type DatabaseService struct {
 func (b *DatabaseService) Before(ctx *Context) bool {
 	b.Db = Db.NewSession()
 	// b.Db.Begin()
-	return b.DefaultService.Before(ctx)
+	return b.CrosService.Before(ctx)
 }
 
 func (b *DatabaseService) Finish(err interface{}) {
@@ -89,5 +95,5 @@ func (b *DatabaseService) Finish(err interface{}) {
 	// 	b.Db.Rollback()
 	// }
 	b.Db.Close()
-	b.DefaultService.Finish(err)
+	b.CrosService.Finish(err)
 }

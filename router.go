@@ -43,14 +43,18 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 			logger.Println(params[0].Type(), m.Name, params[1:])
 			out := m.Func.Call(params)
 			data := out[0].Interface()
-			msg := out[1].String()
-			service.After(data, msg)
+			msg := out[1].Interface()
+			if msg == nil {
+				service.After(data, "")
+			} else {
+				service.After(data, msg.(error).Error())
+			}
 		}
 	}
 }
 
 // bind a router for service's method
-// method satisfy func(in ...interface{}) (interface{},string) will be export
+// method satisfy func(in ...interface{}) (interface{},error) will be export
 // if there is slice/struct/ptr in "params in" ,export a POST router
 func Bind(prefix string, service ApiService) {
 	t := reflect.TypeOf(service)

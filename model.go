@@ -1,6 +1,7 @@
 package gemrest
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/inu1255/gohelper"
@@ -23,10 +24,13 @@ var (
 	orderReg = regexp.MustCompile(`-([^,]+)`)
 )
 
-func defaultWFunc(ctx *Context) string {
+func defaultWhatFunc(ctx *Context) string {
+	return string(ctx.QueryArgs().Peek("what"))
+}
+func defaultWhereFunc(ctx *Context) string {
 	return string(ctx.QueryArgs().Peek("where"))
 }
-func defaultOFunc(ctx *Context) string {
+func defaultOrderFunc(ctx *Context) string {
 	return orderReg.ReplaceAllString(string(ctx.QueryArgs().Peek("order")), `${1} desc`)
 }
 
@@ -38,50 +42,54 @@ func (m *ModelService) SetTable(t TableInterface) {
 	m.Table = t
 }
 
-func (m *ModelService) Get(wFunc func(*Context) string) (interface{}, string) {
+func (m *ModelService) Get(whatFunc, whereFunc func(*Context) string) (interface{}, error) {
 	if m.Table == nil {
-		return make([]interface{}, 0), "need Table"
+		return make([]interface{}, 0), errors.New("need Table")
 	}
-	if wFunc == nil {
-		wFunc = defaultWFunc
+	if whatFunc == nil {
+		whatFunc = defaultWhatFunc
+	}
+	if whereFunc == nil {
+		whereFunc = defaultWhereFunc
 	}
 	one := reflect.New(reflect.TypeOf(m.Table).Elem()).Interface()
-	m.Db.Where(wFunc(m.Ctx))
-	m.Db.Get(one)
-	return one, ""
+	m.Db.Cols(whatFunc(m.Ctx))
+	m.Db.Where(whereFunc(m.Ctx))
+	_, err := m.Db.Get(one)
+	return one, err
 }
-func (m *ModelService) GetById(id string) (interface{}, string) {
+func (m *ModelService) GetById(id string) (interface{}, error) {
 	if m.Table == nil {
-		return make([]interface{}, 0), "need Table"
+		return make([]interface{}, 0), errors.New("need Table")
 	}
 	one := reflect.New(reflect.TypeOf(m.Table).Elem()).Interface()
 	m.Db.Id(id).Get(one)
-	return one.(TableInterface).GetDetail(), ""
+	return one.(TableInterface).GetDetail(), nil
 }
 
-func (this *ModelService) Del(id string) (interface{}, string) {
+func (this *ModelService) DelById(id string) (interface{}, error) {
 	if this.Table == nil {
-		return make([]interface{}, 0), "need Table"
+		return make([]interface{}, 0), errors.New("need Table")
 	}
 	if gohelper.IsZero(id) {
-		return nil, "id错误"
+		return nil, errors.New("id错误")
 	}
 	_, err := this.Db.Id(id).Delete(this.Table)
-	if err != nil {
-		return nil, err.Error()
-	}
-	return nil, ""
+	return nil, err
 }
 
-func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, string) {
+func (m *ModelService) Find(whatFunc, whereFunc, orderFunc func(*Context) string) ([]interface{}, error) {
 	if m.Table == nil {
-		return make([]interface{}, 0), "need Table"
+		return make([]interface{}, 0), errors.New("need Table")
 	}
-	if wFunc == nil {
-		wFunc = defaultWFunc
+	if whatFunc == nil {
+		whatFunc = defaultWhatFunc
 	}
-	if oFunc == nil {
-		oFunc = defaultOFunc
+	if whereFunc == nil {
+		whereFunc = defaultWhereFunc
+	}
+	if orderFunc == nil {
+		orderFunc = defaultOrderFunc
 	}
 	query := m.Ctx.QueryArgs()
 	page, _ := strconv.Atoi(string(query.Peek("page")))
@@ -90,14 +98,15 @@ func (m *ModelService) Find(wFunc, oFunc func(*Context) string) ([]interface{}, 
 		size = 10
 	}
 	data := make([]interface{}, size)
-	m.Db.Where(wFunc(m.Ctx))
-	m.Db.OrderBy(oFunc(m.Ctx))
+	m.Db.Cols(whatFunc(m.Ctx))
+	m.Db.Where(whereFunc(m.Ctx))
+	m.Db.OrderBy(orderFunc(m.Ctx))
 	m.Db.Limit(size, size*page)
 	n := 0
-	m.Db.Iterate(m.Table, func(i int, item interface{}) error {
+	err := m.Db.Iterate(m.Table, func(i int, item interface{}) error {
 		data[i] = item.(TableInterface).GetSearch()
 		n++
 		return nil
 	})
-	return data[:n], ""
+	return data[:n], err
 }
