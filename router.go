@@ -78,6 +78,12 @@ func Bind(prefix string, service ApiService) {
 	}
 }
 
+func Reg(service ApiService) error {
+	t := reflect.TypeOf(service)
+	logger.Println(t)
+	return nil
+}
+
 func Start(host string) {
 	srv := gem.New(host, Router.Handler())
 	logger.Fatal(srv.ListenAndServe())
