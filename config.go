@@ -10,11 +10,12 @@ import (
 
 var (
 	Db     *xorm.Engine
-	logger = log.New(os.Stdout, "", log.Ltime|log.Llongfile)
+	logger = log.New(os.Stdout, "[\x1b[30m gemrest \x1b[0m] ", log.Ltime|log.Lshortfile)
 )
 
 func SetLogger(l *log.Logger) {
 	logger = l
+	logger.SetPrefix("[\x1b[30m gemrest \x1b[0m] ")
 }
 
 func SetDb(driver, datasource string) {

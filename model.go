@@ -2,12 +2,11 @@ package gemrest
 
 import (
 	"errors"
+	"reflect"
+	"regexp"
 	"strconv"
 
 	"github.com/inu1255/gohelper"
-
-	"reflect"
-	"regexp"
 )
 
 type TableInterface interface {

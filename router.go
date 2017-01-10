@@ -3,6 +3,7 @@ package gemrest
 import (
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/go-gem/gem"
 )
@@ -56,32 +57,49 @@ func makeHandlerFunc(m reflect.Method, call []convertFunc) gem.HandlerFunc {
 // bind a router for service's method
 // method satisfy func(in ...interface{}) (interface{},error) will be export
 // if there is slice/struct/ptr in "params in" ,export a POST router
-func Bind(prefix string, service ApiService) {
+func Bind(prefix string, service ApiService) int {
 	t := reflect.TypeOf(service)
 	numMethod := t.NumMethod()
 	// instCall := newInstCall(t.Elem())
 	instCall := copyInstCall(service)
+	n := 0
 	for i := 0; i < numMethod; i++ {
 		m := t.Method(i)
 		flag, path, call := convertMethodParams(prefix, m)
 		if flag == -1 {
 			continue
 		}
+		n++
 		call[0] = instCall
 		if flag == 1 {
-			logger.Println("post", path)
+			logger.Println("\x1b[34mpost\x1b[0m", path)
 			Router.POST(path, makeHandlerFunc(m, call))
 		} else {
-			logger.Println("get ", path)
+			logger.Println("\x1b[32mget \x1b[0m", path)
 			Router.GET(path, makeHandlerFunc(m, call))
 		}
 	}
+	return n
 }
 
-func Reg(service ApiService) error {
-	t := reflect.TypeOf(service)
-	logger.Println(t)
-	return nil
+func Reg(service ApiService) int {
+	prefix := reflect.TypeOf(service).String()
+	if prefix[0] == '*' {
+		prefix = prefix[1:]
+	}
+	prefix = strings.ToLower(prefix)
+	n := len(prefix)
+	if n > 7 && prefix[n-7:] == "service" {
+		n -= 7
+		prefix = prefix[:n]
+	}
+	for i := 0; i < n; i++ {
+		if prefix[i] == '.' {
+			prefix = strings.Join([]string{prefix[:i], "/", prefix[i+1:]}, "")
+			break
+		}
+	}
+	return Bind("/"+prefix, service)
 }
 
 func Start(host string) {
